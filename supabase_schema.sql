@@ -63,15 +63,30 @@ create table if not exists public.journal_entries (
 
 create table if not exists public.milestones (
     id uuid primary key default gen_random_uuid(),
+    child_id uuid references public.children(id) on delete cascade,
+    milestone_key text,
     domain varchar(50) not null,
     age_group varchar(50) not null,
     description text not null,
+    description_en text,
+    is_achieved boolean not null default false,
+    achieved_at timestamptz,
     created_at timestamptz default current_timestamp
 );
+
+alter table public.milestones
+    add column if not exists child_id uuid references public.children(id) on delete cascade,
+    add column if not exists milestone_key text,
+    add column if not exists description_en text,
+    add column if not exists is_achieved boolean not null default false,
+    add column if not exists achieved_at timestamptz;
 
 create index if not exists children_parent_id_idx on public.children(parent_id);
 create index if not exists activity_logs_child_id_idx on public.activity_logs(child_id);
 create index if not exists journal_entries_child_id_idx on public.journal_entries(child_id);
+create unique index if not exists milestones_child_key_idx
+    on public.milestones(child_id, milestone_key)
+    where child_id is not null and milestone_key is not null;
 
 alter table public.parents enable row level security;
 alter table public.children enable row level security;
@@ -160,8 +175,56 @@ create policy "Authenticated users can add catalog activities"
     on public.activities for insert to authenticated with check (true);
 
 drop policy if exists "Milestones are readable" on public.milestones;
-create policy "Milestones are readable"
-    on public.milestones for select to anon, authenticated using (true);
+drop policy if exists "Parents can read their children's milestones" on public.milestones;
+create policy "Parents can read their children's milestones"
+    on public.milestones for select to anon, authenticated
+    using (
+        child_id is null
+        or exists (
+            select 1 from public.children c
+            join public.parents p on p.id = c.parent_id
+            where c.id = milestones.child_id
+              and lower(p.email) = lower(auth.jwt() ->> 'email')
+        )
+    );
+
+drop policy if exists "Parents can add their children's milestones" on public.milestones;
+create policy "Parents can add their children's milestones"
+    on public.milestones for insert to authenticated
+    with check (
+        child_id is not null
+        and exists (
+            select 1 from public.children c
+            join public.parents p on p.id = c.parent_id
+            where c.id = milestones.child_id
+              and lower(p.email) = lower(auth.jwt() ->> 'email')
+        )
+    );
+
+drop policy if exists "Parents can update their children's milestones" on public.milestones;
+create policy "Parents can update their children's milestones"
+    on public.milestones for update to authenticated
+    using (
+        child_id is not null
+        and exists (
+            select 1 from public.children c
+            join public.parents p on p.id = c.parent_id
+            where c.id = milestones.child_id
+              and lower(p.email) = lower(auth.jwt() ->> 'email')
+        )
+    )
+    with check (
+        child_id is not null
+        and exists (
+            select 1 from public.children c
+            join public.parents p on p.id = c.parent_id
+            where c.id = milestones.child_id
+              and lower(p.email) = lower(auth.jwt() ->> 'email')
+        )
+    );
+
+grant select on public.milestones to anon, authenticated;
+grant insert, update on public.milestones to authenticated;
 
 -- Provision Auth users in Supabase Authentication and matching parent profiles
 -- with a trusted admin workflow. The app authenticates only through Supabase Auth;

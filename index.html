@@ -124,6 +124,7 @@
     const SUPABASE_KEY = "sb_publishable_Fw_0EjqKvJYJ9WlXUCpvkQ_F4AJc_TY";
     const SUPABASE_STORAGE_KEY = 'parent_companion_sb_config';
     const LOCAL_JOURNAL_STORAGE_KEY = 'parent_companion_local_journals';
+    const LOCAL_MILESTONES_STORAGE_KEY = 'parent_companion_local_milestones';
 
     const getStoredSupabaseConfig = () => {
       try {
@@ -230,7 +231,9 @@
       if (current.data.length) return current.data.map(mapDatabaseActivity);
       if (!allowSeed) return [];
 
-      const rowsToSeed = ACTIVITIES_DATA.map(activity => ({
+      const rowsToSeed = ACTIVITIES_DATA
+        .filter(activity => LOCAL_ACTIVITY_GUIDE_IMAGES[activity.id])
+        .map(activity => ({
         title: activity.title.id,
         description: activity.description.id,
         category: activity.category,
@@ -276,6 +279,158 @@
         learningFocus: Array.isArray(row.learning_focus) ? row.learning_focus : [],
         dailyTime: Number(row.available_time) || 20
       };
+    }
+
+    const MILESTONE_AGE_GROUPS = [
+      {
+        id: '2-3',
+        label: { id: '2–3 tahun', en: 'Ages 2–3' },
+        categories: [
+          { domain: 'Motorik & Montessori', milestones: [
+            ['transfer-object', 'Memindahkan benda besar dari satu wadah ke wadah lain.', 'Transfers large objects from one container to another.'],
+            ['practical-pour', 'Mencoba menuang air atau bahan kering dengan bantuan.', 'Attempts to pour water or dry materials with support.']
+          ] },
+          { domain: 'Logika & STEM', milestones: [
+            ['cause-effect', 'Mengamati dan menunjukkan hubungan sebab-akibat sederhana.', 'Notices and shows simple cause-and-effect relationships.'],
+            ['sort-by-feature', 'Mengelompokkan benda berdasarkan satu ciri, seperti warna atau ukuran.', 'Sorts objects by one feature, such as color or size.']
+          ] },
+          { domain: 'Literasi & Bahasa', milestones: [
+            ['name-objects', 'Menyebut nama benda yang dikenal saat bermain atau membaca.', 'Names familiar objects during play or reading.'],
+            ['follow-story', 'Menyimak cerita singkat dan merespons gambar atau tokohnya.', 'Listens to a short story and responds to its pictures or characters.']
+          ] },
+          { domain: 'Numerasi', milestones: [
+            ['count-few', 'Mengucapkan atau mencocokkan urutan bilangan awal saat bermain.', 'Says or matches early number words during play.'],
+            ['match-one-one', 'Memasangkan satu benda dengan satu wadah atau gambar.', 'Matches one object to one container or picture.']
+          ] }
+        ]
+      },
+      {
+        id: '4-5',
+        label: { id: '4–5 tahun', en: 'Ages 4–5' },
+        categories: [
+          { domain: 'Motorik & Montessori', milestones: [
+            ['fine-motor-tools', 'Menggunakan alat aman seperti penjepit atau sendok dengan kontrol yang berkembang.', 'Uses safe tools such as tongs or a spoon with growing control.'],
+            ['independent-sequence', 'Mengikuti urutan dua hingga tiga langkah dalam kegiatan praktis.', 'Follows a two- or three-step sequence in a practical activity.']
+          ] },
+          { domain: 'Logika & STEM', milestones: [
+            ['predict-result', 'Menyampaikan prediksi sederhana sebelum mencoba eksperimen.', 'Makes a simple prediction before trying an experiment.'],
+            ['test-and-compare', 'Membandingkan hasil percobaan dan menyebutkan apa yang berubah.', 'Compares experiment results and describes what changed.']
+          ] },
+          { domain: 'Literasi & Bahasa', milestones: [
+            ['sequence-story', 'Menceritakan kembali urutan awal, tengah, dan akhir sebuah cerita.', 'Retells the beginning, middle, and end of a story.'],
+            ['letter-sound', 'Mengenali beberapa huruf dan menghubungkannya dengan bunyi.', 'Recognizes some letters and connects them with their sounds.']
+          ] },
+          { domain: 'Numerasi', milestones: [
+            ['count-objects', 'Menghitung kumpulan benda kecil dengan mencocokkan satu angka ke satu benda.', 'Counts a group of objects by matching one number to each item.'],
+            ['identify-shapes', 'Mengenali dan mengelompokkan bentuk sederhana di lingkungan sekitar.', 'Recognizes and sorts simple shapes found nearby.']
+          ] }
+        ]
+      },
+      {
+        id: '6-8',
+        label: { id: '6–8 tahun', en: 'Ages 6–8' },
+        categories: [
+          { domain: 'Motorik & Montessori', milestones: [
+            ['plan-materials', 'Menyiapkan dan merapikan bahan kegiatan dengan semakin mandiri.', 'Prepares and puts away activity materials with growing independence.'],
+            ['precise-handwork', 'Melakukan tugas tangan bertahap dengan koordinasi dan ketelitian.', 'Completes multi-step hand tasks with coordination and care.']
+          ] },
+          { domain: 'Logika & STEM', milestones: [
+            ['plan-test-improve', 'Merancang percobaan sederhana, menguji, lalu mencoba perbaikan.', 'Plans a simple test, tries it, and makes an improvement.'],
+            ['explain-observation', 'Menjelaskan pengamatan menggunakan alasan atau bukti sederhana.', 'Explains an observation using simple reasons or evidence.']
+          ] },
+          { domain: 'Literasi & Bahasa', milestones: [
+            ['create-story', 'Menyusun cerita dengan tokoh, masalah, dan penyelesaian yang jelas.', 'Creates a story with a character, problem, and resolution.'],
+            ['read-instructions', 'Membaca atau mengikuti instruksi tertulis singkat secara berurutan.', 'Reads or follows short written instructions in order.']
+          ] },
+          { domain: 'Numerasi', milestones: [
+            ['measure-compare', 'Mengukur dan membandingkan panjang atau jumlah menggunakan satuan sederhana.', 'Measures and compares length or quantity using simple units.'],
+            ['record-data', 'Mencatat hasil pengelompokan atau hitungan sederhana.', 'Records simple sorting or counting results.']
+          ] }
+        ]
+      },
+      {
+        id: '9-12',
+        label: { id: '9–12 tahun', en: 'Ages 9–12' },
+        categories: [
+          { domain: 'Motorik & Montessori', milestones: [
+            ['independent-project', 'Merencanakan tugas praktis dan menyelesaikannya dengan tanggung jawab.', 'Plans and completes a practical task responsibly.'],
+            ['refine-technique', 'Memilih dan menyempurnakan teknik kerja untuk hasil yang lebih teliti.', 'Chooses and refines a working technique for greater precision.']
+          ] },
+          { domain: 'Logika & STEM', milestones: [
+            ['design-controlled-test', 'Membandingkan beberapa solusi dengan uji yang terencana.', 'Compares multiple solutions using a planned test.'],
+            ['explain-evidence', 'Menjelaskan kesimpulan dengan merujuk pada hasil pengamatan.', 'Explains a conclusion by referring to observations.']
+          ] },
+          { domain: 'Literasi & Bahasa', milestones: [
+            ['present-ideas', 'Menyampaikan gagasan atau hasil proyek secara runtut dan jelas.', 'Presents ideas or project results clearly and in sequence.'],
+            ['summarize-information', 'Merangkum informasi penting dari bacaan atau instruksi.', 'Summarizes key information from reading or instructions.']
+          ] },
+          { domain: 'Numerasi', milestones: [
+            ['compare-measurements', 'Menggunakan pengukuran dan perbandingan angka untuk memecahkan masalah.', 'Uses measurements and numerical comparisons to solve a problem.'],
+            ['interpret-data', 'Membaca dan menjelaskan pola sederhana dari data yang dikumpulkan.', 'Reads and explains simple patterns in collected data.']
+          ] }
+        ]
+      }
+    ];
+
+    function getMilestoneAgeGroup(age) {
+      if (age <= 3) return MILESTONE_AGE_GROUPS[0];
+      if (age <= 5) return MILESTONE_AGE_GROUPS[1];
+      if (age <= 8) return MILESTONE_AGE_GROUPS[2];
+      return MILESTONE_AGE_GROUPS[3];
+    }
+
+    function createMilestoneRows(child) {
+      const ageGroup = getMilestoneAgeGroup(Number(child?.age) || 2);
+      return ageGroup.categories.flatMap(category => category.milestones.map(([key, id, en]) => ({
+        milestone_key: `${ageGroup.id}-${key}`,
+        domain: category.domain,
+        age_group: ageGroup.label.id,
+        description: id,
+        description_en: en,
+        is_achieved: false,
+        achieved_at: null
+      })));
+    }
+
+    const MILESTONE_REVIEW_PREFIX = '__PARENT_REVIEW__:';
+
+    function readMilestoneReview(row) {
+      const englishDescription = String(row.description_en || '');
+      if (englishDescription.startsWith(MILESTONE_REVIEW_PREFIX)) {
+        try {
+          const review = JSON.parse(englishDescription.slice(MILESTONE_REVIEW_PREFIX.length));
+          return {
+            englishDescription: review.englishDescription || row.description,
+            assessment_level: ['not_observed', 'developing', 'independent'].includes(review.assessment_level)
+              ? review.assessment_level
+              : (row.is_achieved ? 'independent' : 'not_observed'),
+            parent_note: typeof review.parent_note === 'string' ? review.parent_note : ''
+          };
+        } catch (error) {
+          console.warn('Metadata penilaian milestone tidak valid:', error);
+        }
+      }
+      return {
+        englishDescription: englishDescription || row.description,
+        assessment_level: ['not_observed', 'developing', 'independent'].includes(row.assessment_level)
+          ? row.assessment_level
+          : (row.is_achieved ? 'independent' : 'not_observed'),
+        parent_note: typeof row.parent_note === 'string' ? row.parent_note : ''
+      };
+    }
+
+    function writeMilestoneReview(row, assessmentLevel, parentNote) {
+      const review = readMilestoneReview(row);
+      return `${MILESTONE_REVIEW_PREFIX}${JSON.stringify({
+        englishDescription: review.englishDescription,
+        assessment_level: assessmentLevel,
+        parent_note: parentNote
+      })}`;
+    }
+
+    function getMilestoneAssessmentScore(row) {
+      const level = readMilestoneReview(row).assessment_level;
+      return level === 'independent' ? 100 : level === 'developing' ? 50 : 0;
     }
 
     async function getOrCreateParentProfile(client, user, lang, parentName) {
@@ -518,6 +673,22 @@
         navDashboard: "Dashboard",
         navLibrary: "Pustaka Aktivitas",
         navJournal: "Jurnal Observasi",
+        navMilestones: "Target & Milestones",
+        milestoneHeading: "Target & Milestones",
+        milestoneSub: "Pantau keterampilan yang sedang berkembang sesuai kelompok usia anak.",
+        milestoneProgress: "Progres pencapaian",
+        milestoneDone: "tercapai",
+        milestoneLoading: "Memuat target perkembangan...",
+        milestoneEmpty: "Belum ada target untuk kelompok usia ini.",
+        milestoneReportTitle: "Rapor Tumbuh Kembang",
+        milestoneOverall: "Skor pencapaian keseluruhan",
+        milestoneNotObserved: "Belum Terlihat",
+        milestoneDeveloping: "Mulai Berkembang",
+        milestoneIndependent: "Sudah Mandiri",
+        milestoneParentNote: "Catatan singkat orang tua (opsional)",
+        milestoneNotePlaceholder: "Contoh: mulai mencoba sendiri saat...",
+        milestoneAchievedDate: "Tercapai",
+        milestoneSaving: "Menyimpan...",
         navLogout: "Keluar (Ganti Akun)",
         parentBadge: "Orang Tua Pendamping",
         // Top Header
@@ -555,6 +726,7 @@
         stepByStep: "Instruksi Langkah Demi Langkah",
         parentTips: "Tips Pendampingan Fasilitatif Orang Tua",
         finalResult: "Hasil Akhir",
+        activityResultLabel: "Contoh Hasil Aktivitas",
         milestones: "Indikator Perkembangan yang Dilatih",
         cancel: "Batal",
         close: "Tutup",
@@ -608,6 +780,22 @@
         navDashboard: "Dashboard",
         navLibrary: "Activity Library",
         navJournal: "Observation Journal",
+        navMilestones: "Goals & Milestones",
+        milestoneHeading: "Goals & Milestones",
+        milestoneSub: "Track developing skills tailored to your child's age group.",
+        milestoneProgress: "Achievement progress",
+        milestoneDone: "achieved",
+        milestoneLoading: "Loading developmental goals...",
+        milestoneEmpty: "There are no goals for this age group yet.",
+        milestoneReportTitle: "Child Development Report",
+        milestoneOverall: "Overall achievement score",
+        milestoneNotObserved: "Not Yet Observed",
+        milestoneDeveloping: "Emerging",
+        milestoneIndependent: "Independent",
+        milestoneParentNote: "Parent note (optional)",
+        milestoneNotePlaceholder: "Example: starting to try independently when...",
+        milestoneAchievedDate: "Achieved",
+        milestoneSaving: "Saving...",
         navLogout: "Log Out (Switch Account)",
         parentBadge: "Facilitating Parent",
         // Top Header
@@ -645,6 +833,7 @@
         stepByStep: "Step-by-Step Instructions",
         parentTips: "Facilitative Parenting Tips",
         finalResult: "Final Result",
+        activityResultLabel: "Activity Result Example",
         milestones: "Target Developmental Milestones",
         cancel: "Cancel",
         close: "Close",
@@ -1771,7 +1960,10 @@
       'act-9': 'Misi Pindah Pom-Pom dengan Penjepit',
       'act-10': 'Tuang Air untuk Tanaman',
       'act-11': 'Eksperimen Terapung atau Tenggelam',
-      'act-12': 'Jembatan Kertas Penahan Beban'
+      'act-12': 'Jembatan Kertas Penahan Beban',
+      'act-13': 'Cerita Berantai dari Kartu Gambar',
+      'act-14': 'Berburu Huruf di Rumah',
+      'act-15': 'Detektif Bentuk di Sekitar Kita'
     };
 
     ACTIVITIES_DATA.forEach(activity => {
@@ -1858,10 +2050,14 @@
       const [databaseChildren, setDatabaseChildren] = useState([]);
       const [activeChildId, setActiveChildId] = useState(null);
       const [journals, setJournals] = useState([]);
+      const [childMilestones, setChildMilestones] = useState([]);
+      const [milestonesLoading, setMilestonesLoading] = useState(false);
+      const [milestoneSavingIds, setMilestoneSavingIds] = useState([]);
       const [completedActivityIds, setCompletedActivityIds] = useState([]);
       const [isLocalSession, setIsLocalSession] = useState(false);
       const activeChild = databaseChildren.find(child => child.id === activeChildId) || databaseChildren[0] || null;
-      const appActivities = databaseActivities.length ? databaseActivities : ACTIVITIES_DATA;
+      const appActivities = (databaseActivities.length ? databaseActivities : ACTIVITIES_DATA)
+        .filter(activity => activity.localGuideImages);
 
       // Activities and milestones are public catalog data; parent data is fetched only after authentication.
       useEffect(() => {
@@ -1964,6 +2160,98 @@
         return () => { isMounted = false; };
       }, [sbClient, currentParent?.id, activeChild?.id, databaseActivities, lang, isLocalSession]);
 
+      useEffect(() => {
+        if (!currentParent || !activeChild) {
+          setChildMilestones([]);
+          setMilestonesLoading(false);
+          return undefined;
+        }
+
+        if (isLocalSession) {
+          try {
+            const storageKey = `${LOCAL_MILESTONES_STORAGE_KEY}:${activeChild.id}`;
+            const stored = localStorage.getItem(storageKey);
+            const initialRows = createMilestoneRows(activeChild).map((milestone, index) => ({
+              ...milestone,
+              id: `local:${milestone.milestone_key}`,
+              child_id: activeChild.id
+            }));
+            const storedRows = stored === null ? [] : JSON.parse(stored);
+            if (!Array.isArray(storedRows)) throw new Error('Format milestones lokal tidak valid.');
+            const currentKeys = new Set(initialRows.map(row => row.milestone_key));
+            const currentRows = storedRows.filter(row => currentKeys.has(row.milestone_key));
+            const savedRows = initialRows.map(row =>
+              currentRows.find(saved => saved.milestone_key === row.milestone_key) || row
+            );
+            localStorage.setItem(storageKey, JSON.stringify([...storedRows.filter(row => !currentKeys.has(row.milestone_key)), ...savedRows]));
+            setChildMilestones(savedRows);
+          } catch (error) {
+            console.error('Gagal memuat milestones lokal:', error);
+            setChildMilestones([]);
+            showToast(lang === 'id'
+              ? 'Checklist lokal tidak dapat dibaca. Periksa izin penyimpanan browser.'
+              : 'Local milestones could not be read. Check browser storage permissions.');
+          }
+          setMilestonesLoading(false);
+          return undefined;
+        }
+
+        if (!sbClient) {
+          setChildMilestones([]);
+          setMilestonesLoading(false);
+          return undefined;
+        }
+
+        let isMounted = true;
+        const loadMilestones = async () => {
+          setMilestonesLoading(true);
+          try {
+            const columns = 'id,child_id,milestone_key,domain,age_group,description,description_en,is_achieved,achieved_at';
+            const fetchRows = () => sbClient
+              .from('milestones')
+              .select(columns)
+              .eq('child_id', activeChild.id)
+              .order('domain', { ascending: true })
+              .order('milestone_key', { ascending: true });
+
+            let { data, error } = await fetchRows();
+            if (error) throw error;
+
+            const expectedRows = createMilestoneRows(activeChild);
+            const expectedKeys = new Set(expectedRows.map(row => row.milestone_key));
+            const existingKeys = new Set((data || []).map(row => row.milestone_key));
+            const missingRows = expectedRows
+              .filter(row => !existingKeys.has(row.milestone_key))
+              .map(row => ({ ...row, child_id: activeChild.id }));
+            if (missingRows.length) {
+              const seeded = await sbClient.from('milestones').insert(missingRows).select(columns);
+              if (seeded.error && seeded.error.code !== '23505') throw seeded.error;
+              if (seeded.error?.code === '23505') {
+                ({ data, error } = await fetchRows());
+                if (error) throw error;
+              } else {
+                data = [...(data || []), ...(seeded.data || [])];
+              }
+            }
+
+            if (isMounted) setChildMilestones((data || []).filter(row => expectedKeys.has(row.milestone_key)));
+          } catch (error) {
+            console.error('Gagal memuat milestones anak dari Supabase:', error);
+            if (isMounted) {
+              setChildMilestones([]);
+              showToast(lang === 'id'
+                ? 'Milestones Supabase belum siap. Jalankan pembaruan skema milestones dari supabase_schema.sql di SQL Editor.'
+                : 'Supabase milestones are not ready. Run the milestones schema update from supabase_schema.sql in SQL Editor.');
+            }
+          } finally {
+            if (isMounted) setMilestonesLoading(false);
+          }
+        };
+
+        loadMilestones();
+        return () => { isMounted = false; };
+      }, [sbClient, currentParent?.id, activeChild?.id, activeChild?.age, isLocalSession, lang]);
+
       // Handler Pengaturan Supabase
       const handleSaveSbConfig = (url, anonKey) => {
         const newCfg = { url, anonKey };
@@ -1983,7 +2271,16 @@
           throw new Error(lang === 'id' ? 'Supabase belum tersambung.' : 'Supabase is not connected.');
         }
         const { data: authData, error: authError } = await sbClient.auth.signInWithPassword({ email, password });
-        if (authError) throw authError;
+        if (authError) {
+          const invalidCredentials = authError.code === 'invalid_credentials' ||
+            /invalid login credentials/i.test(authError.message || '');
+          if (invalidCredentials) {
+            throw new Error(lang === 'id'
+              ? 'Email atau kata sandi tidak cocok dengan akun Supabase Auth. Data di kolom parents.password_hash tidak digunakan untuk login. Buat/undang akun dengan email ini di Supabase Dashboard > Authentication, lalu gunakan kata sandi Auth tersebut.'
+              : 'The email or password does not match a Supabase Auth account. The parents.password_hash column is not used for sign-in. Create/invite this email in Supabase Dashboard > Authentication, then use that Auth password.');
+          }
+          throw authError;
+        }
         const authenticatedEmail = authData.user?.email;
         if (!authenticatedEmail) {
           await sbClient.auth.signOut();
@@ -2123,6 +2420,75 @@
         showToast(lang === 'id' ? 'Masuk dengan data lokal. Jurnal disimpan di browser ini.' : 'Signed in with local data. Journals are saved in this browser.');
       };
 
+      const handleAssessMilestone = async (milestone, assessmentLevel, parentNote) => {
+        const isAchieved = assessmentLevel === 'independent';
+        const achievedAt = isAchieved
+          ? (milestone.achieved_at || new Date().toISOString())
+          : null;
+        const encodedDescription = writeMilestoneReview(milestone, assessmentLevel, parentNote);
+        const updatedMilestone = {
+          ...milestone,
+          description_en: encodedDescription,
+          assessment_level: assessmentLevel,
+          parent_note: parentNote,
+          is_achieved: isAchieved,
+          achieved_at: achievedAt
+        };
+
+        if (isLocalSession) {
+          try {
+            const updatedRows = childMilestones.map(row =>
+              row.milestone_key === milestone.milestone_key
+                ? updatedMilestone
+                : row
+            );
+            localStorage.setItem(
+              `${LOCAL_MILESTONES_STORAGE_KEY}:${activeChild.id}`,
+              JSON.stringify(updatedRows)
+            );
+            setChildMilestones(updatedRows);
+          } catch (error) {
+            console.error('Gagal menyimpan milestone lokal:', error);
+            showToast(lang === 'id'
+              ? 'Milestone lokal gagal disimpan. Periksa ruang dan izin penyimpanan browser.'
+              : 'Local milestone could not be saved. Check browser storage space and permissions.');
+          }
+          return;
+        }
+
+        if (!sbClient || !activeChild) {
+          showToast(lang === 'id' ? 'Profil anak atau koneksi Supabase tidak tersedia.' : 'The child profile or Supabase connection is unavailable.');
+          return;
+        }
+
+        setMilestoneSavingIds(current => [...new Set([...current, milestone.id])]);
+        try {
+          const { data, error } = await sbClient
+            .from('milestones')
+            .update({
+              is_achieved: isAchieved,
+              achieved_at: achievedAt,
+              description_en: encodedDescription
+            })
+            .eq('id', milestone.id)
+            .eq('child_id', activeChild.id)
+            .select('id,child_id,milestone_key,domain,age_group,description,description_en,is_achieved,achieved_at')
+            .single();
+          if (error || !data) throw error || new Error('Updated milestone row was not returned.');
+          const review = readMilestoneReview(data);
+          setChildMilestones(rows => rows.map(row => row.id === data.id
+            ? { ...data, assessment_level: review.assessment_level, parent_note: review.parent_note }
+            : row));
+        } catch (error) {
+          console.error('Gagal memperbarui milestone di Supabase:', error);
+          showToast(lang === 'id'
+            ? 'Penilaian gagal disimpan. Periksa izin update dan kolom milestones di Supabase.'
+            : 'The assessment could not be saved. Check Supabase milestone update permissions and columns.');
+        } finally {
+          setMilestoneSavingIds(current => current.filter(id => id !== milestone.id));
+        }
+      };
+
       const handleDisconnectSb = async () => {
         if (sbClient) {
           const { error } = await sbClient.auth.signOut();
@@ -2137,6 +2503,7 @@
         setDatabaseChildren([]);
         setActiveChildId(null);
         setJournals([]);
+        setChildMilestones([]);
         setCompletedActivityIds([]);
         setIsLocalSession(false);
         setCurrentScreen('login');
@@ -2334,8 +2701,8 @@
             ? 'Jurnal tersimpan, tetapi log aktivitas gagal disimpan. Periksa izin activity_logs.'
             : 'Journal saved, but the activity log failed. Check activity_logs permissions.')
           : (lang === 'id'
-            ? '☁️ Jurnal berhasil disimpan ke Supabase!'
-            : '☁️ Journal successfully saved to Supabase!'));
+            ? 'Jurnal berhasil disimpan!'
+            : 'Journal saved successfully!'));
         return true;
       };
 
@@ -2358,7 +2725,6 @@
               lang={lang}
               setLang={setLang}
               t={t}
-              onOpenSupabaseConfig={() => setIsSbModalOpen(true)}
               onLogin={handleLogin}
               onLocalLogin={handleLocalLogin}
             />
@@ -2410,6 +2776,13 @@
                       badge={`${journals.filter(j => j.childId === activeChild?.id).length}`}
                       onClick={() => setActiveTab('journal')} 
                     />
+                    <SidebarItem
+                      icon="check"
+                      label={t.navMilestones}
+                      active={activeTab === 'milestones'}
+                      badge={`${childMilestones.filter(item => item.is_achieved).length}/${childMilestones.length}`}
+                      onClick={() => setActiveTab('milestones')}
+                    />
                   </nav>
                 </div>
 
@@ -2460,6 +2833,7 @@
                       {activeTab === 'dashboard' && t.navDashboard}
                       {activeTab === 'library' && t.navLibrary}
                       {activeTab === 'journal' && t.navJournal}
+                      {activeTab === 'milestones' && t.navMilestones}
                     </span>
                     <span className="text-stone-300">/</span>
                     <span className="text-sm font-semibold text-slate-700 flex items-center gap-2">
@@ -2493,14 +2867,6 @@
 
                     {/* Language Switcher [ ID | EN ] */}
                     <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => setIsSbModalOpen(true)}
-                      title={t.databaseSettings}
-                      aria-label={t.databaseSettings}
-                      className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white text-slate-500 hover:text-sage-700"
-                    >
-                      ⚙️
-                    </button>
                     <div className="flex items-center bg-stone-100 p-1 rounded-xl border border-stone-200">
                       <button
                         onClick={() => setLang('id')}
@@ -2580,6 +2946,18 @@
                           setJournalActivity(recommendedActivity);
                           setIsJournalModalOpen(true);
                         }}
+                      />
+                    )}
+
+                    {activeTab === 'milestones' && (
+                      <MilestonesDesktopView
+                        lang={lang}
+                        t={t}
+                        child={activeChild}
+                        milestones={childMilestones}
+                        isLoading={milestonesLoading}
+                        savingIds={milestoneSavingIds}
+                        onAssess={handleAssessMilestone}
                       />
                     )}
 
@@ -2679,7 +3057,7 @@
     // ====================================================================
     // 1. SCREEN: SIMPLE LOGIN SCREEN (DENGAN FITUR MATA PASSWORD)
     // ====================================================================
-    function SimpleLoginScreen({ lang, setLang, t, onLogin, onLocalLogin, onOpenSupabaseConfig }) {
+    function SimpleLoginScreen({ lang, setLang, t, onLogin, onLocalLogin }) {
       const [showPassword, setShowPassword] = useState(false);
       const [email, setEmail] = useState('');
       const [password, setPassword] = useState('');
@@ -2704,15 +3082,6 @@
             </div>
 
             <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onOpenSupabaseConfig}
-                title={t.databaseSettings}
-                aria-label={t.databaseSettings}
-                className="px-2.5 py-1.5 rounded-xl border border-stone-200 bg-white text-slate-500 hover:text-sage-700"
-              >
-                ⚙️
-              </button>
               <div className="flex items-center bg-white p-1 rounded-xl border border-stone-200 shadow-xs">
                 <button
                   onClick={() => setLang('id')}
@@ -2821,8 +3190,8 @@
 
                 <p className="text-[10px] leading-relaxed text-slate-500">
                   {lang === 'id'
-                    ? 'Gunakan email dan kata sandi Supabase Auth. Jika profil parents belum ada, isi nama di atas; profil dibuat saat masuk pertama kali. Pastikan profil anak sudah terhubung di children.'
-                    : 'Use your Supabase Auth email and password. If no parents profile exists, enter the name above; it will be created on first sign-in. Make sure a child profile is linked in children.'}
+                    ? 'Login memakai akun Supabase Auth; kolom parents.password_hash bukan kredensial login. Jika belum punya akun Auth dengan email ini, buat/undang akun melalui Supabase Dashboard > Authentication. Nama di atas dipakai jika profil parents perlu dibuat. Pastikan profil anak sudah terhubung di children.'
+                    : 'Sign-in uses Supabase Auth; parents.password_hash is not a login credential. If this email has no Auth account, create/invite it in Supabase Dashboard > Authentication. The name above is used if a parents profile needs to be created. Make sure a child profile is linked in children.'}
                 </p>
                 {loginError && (
                   <p role="alert" className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3">
@@ -3251,6 +3620,17 @@
                   )}
 
                   <div>
+                    <div className="-mx-6 -mt-6 mb-4 h-40 bg-sage-50 border-b border-stone-100 flex items-center justify-center overflow-hidden">
+                      <img
+                        src={act.localGuideImages.final}
+                        alt={`${act.title[lang]} — ${t.activityResultLabel}`}
+                        loading="lazy"
+                        className="w-full h-full object-contain"
+                      />
+                      <span className="absolute top-3 left-3 rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-bold text-sage-800 shadow-sm">
+                        ✨ {t.activityResultLabel}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-sage-700 bg-sage-50 px-2.5 py-0.5 rounded-md">
                         {act.category}
@@ -3516,6 +3896,174 @@
       );
     }
 
+    function MilestonesDesktopView({ lang, t, child, milestones, isLoading, savingIds, onAssess }) {
+      const [noteDrafts, setNoteDrafts] = useState({});
+      const categories = [
+        { id: 'Motorik & Montessori', en: 'Motor Skills & Montessori', icon: '🌱' },
+        { id: 'Logika & STEM', en: 'Logic & STEM', icon: '🔬' },
+        { id: 'Literasi & Bahasa', en: 'Literacy & Language', icon: '📚' },
+        { id: 'Numerasi', en: 'Numeracy', icon: '🔢' }
+      ];
+      const achievedCount = milestones.filter(item => item.is_achieved).length;
+      const progress = milestones.length
+        ? Math.round(milestones.reduce((total, item) => total + getMilestoneAssessmentScore(item), 0) / milestones.length)
+        : 0;
+      const ageGroup = getMilestoneAgeGroup(Number(child?.age) || 2);
+      const assessmentOptions = [
+        { id: 'not_observed', label: t.milestoneNotObserved, selected: 'bg-stone-700 text-white border-stone-700', idle: 'text-stone-600 border-stone-200 hover:bg-stone-50' },
+        { id: 'developing', label: t.milestoneDeveloping, selected: 'bg-amber-500 text-white border-amber-500', idle: 'text-amber-800 border-amber-200 hover:bg-amber-50' },
+        { id: 'independent', label: t.milestoneIndependent, selected: 'bg-sage-600 text-white border-sage-600', idle: 'text-sage-800 border-sage-200 hover:bg-sage-50' }
+      ];
+      const getCategoryProgress = category => {
+        const categoryItems = milestones.filter(item => item.domain === category.id);
+        return categoryItems.length
+          ? Math.round(categoryItems.reduce((total, item) => total + getMilestoneAssessmentScore(item), 0) / categoryItems.length)
+          : 0;
+      };
+
+      return (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-bold font-display text-slate-900">{t.milestoneHeading}</h2>
+            <p className="text-xs text-slate-500 mt-1">{t.milestoneSub}</p>
+          </div>
+
+          <section className="bg-white p-6 rounded-3xl border border-sage-200 shadow-2xs">
+              <div className="flex flex-col lg:flex-row lg:items-center gap-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wide text-sage-700">
+                    {lang === 'id' ? ageGroup.label.id : ageGroup.label.en}
+                  </p>
+                  <h3 className="font-display font-bold text-lg text-slate-900 mt-1">
+                    {t.forChild} {child?.name}
+                  </h3>
+                  <p className="text-xs font-bold uppercase tracking-wide text-stone-500 mt-3">{t.milestoneReportTitle}</p>
+                  <div className="flex items-baseline gap-2 mt-1">
+                    <span className="font-display text-4xl font-bold text-sage-700">{progress}%</span>
+                    <span className="text-xs text-slate-500">{t.milestoneOverall}</span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-1">{achievedCount} / {milestones.length} {t.milestoneDone}</p>
+                </div>
+                <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {categories.map(category => {
+                    const categoryProgress = getCategoryProgress(category);
+                    return (
+                      <div key={category.id} className="p-3 rounded-2xl bg-stone-50 border border-stone-100">
+                        <div className="flex justify-between gap-2 text-[11px] font-semibold text-slate-700 mb-2">
+                          <span className="truncate">{category.icon} {lang === 'id' ? category.id : category.en}</span>
+                          <span>{categoryProgress}%</span>
+                        </div>
+                        <div
+                          className="h-2 rounded-full bg-white overflow-hidden"
+                          role="progressbar"
+                          aria-label={`${lang === 'id' ? category.id : category.en}: ${categoryProgress}%`}
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                          aria-valuenow={categoryProgress}
+                        >
+                          <div className="h-full rounded-full bg-sage-600 transition-all" style={{ width: `${categoryProgress}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+            </div>
+          </section>
+
+          {isLoading ? (
+            <p role="status" className="bg-white p-5 rounded-2xl border border-stone-200 text-sm text-slate-500">{t.milestoneLoading}</p>
+          ) : milestones.length === 0 ? (
+            <p className="bg-white p-5 rounded-2xl border border-stone-200 text-sm text-slate-500">{t.milestoneEmpty}</p>
+          ) : (
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+              {categories.map(category => {
+                const items = milestones.filter(item => item.domain === category.id);
+                if (!items.length) return null;
+                return (
+                  <section key={category.id} className="bg-white p-5 rounded-3xl border border-stone-200/90 shadow-2xs space-y-3">
+                    <h3 className="font-display font-bold text-base text-slate-900 flex items-center gap-2">
+                      <span aria-hidden="true">{category.icon}</span>
+                      {lang === 'id' ? category.id : category.en}
+                    </h3>
+                    <div className="space-y-2">
+                      {items.map(item => (
+                        <article
+                          key={item.id || item.milestone_key}
+                          className="p-4 rounded-2xl border border-stone-200 bg-stone-50/70 space-y-3"
+                        >
+                          {(() => {
+                            const review = readMilestoneReview(item);
+                            const selectedLevel = review.assessment_level;
+                            const isSaving = savingIds.includes(item.id);
+                            const noteValue = Object.prototype.hasOwnProperty.call(noteDrafts, item.id)
+                              ? noteDrafts[item.id]
+                              : review.parent_note;
+                            return (
+                              <>
+                                <p className="text-xs leading-relaxed font-semibold text-slate-800">
+                                  {lang === 'id' ? item.description : review.englishDescription}
+                                </p>
+                                <div className="flex flex-wrap gap-2" role="group" aria-label={lang === 'id' ? 'Penilaian orang tua' : 'Parent assessment'}>
+                                  {assessmentOptions.map(option => (
+                                    <button
+                                      key={option.id}
+                                      type="button"
+                                      disabled={isSaving}
+                                      aria-pressed={selectedLevel === option.id}
+                                      onClick={() => onAssess(item, option.id, noteDrafts[item.id] ?? review.parent_note)}
+                                      className={`px-3 py-1.5 rounded-full border text-[10px] font-bold transition disabled:opacity-50 ${
+                                        selectedLevel === option.id ? option.selected : `bg-white ${option.idle}`
+                                      }`}
+                                    >
+                                      {option.label}
+                                    </button>
+                                  ))}
+                                </div>
+                                <div>
+                                  <label className="block text-[10px] font-bold text-slate-600 mb-1" htmlFor={`milestone-note-${item.id}`}>
+                                    {t.milestoneParentNote}
+                                  </label>
+                                  <textarea
+                                    id={`milestone-note-${item.id}`}
+                                    rows="2"
+                                    value={noteValue}
+                                    placeholder={t.milestoneNotePlaceholder}
+                                    disabled={isSaving}
+                                    onChange={event => setNoteDrafts(current => ({ ...current, [item.id]: event.target.value }))}
+                                    className="w-full resize-y rounded-xl border border-stone-200 bg-white px-3 py-2 text-[11px] text-slate-700 outline-none focus:border-sage-400"
+                                  />
+                                  {noteValue.trim() !== review.parent_note && (
+                                    <button
+                                      type="button"
+                                      disabled={isSaving}
+                                      onClick={() => onAssess(item, selectedLevel, noteValue.trim())}
+                                      className="mt-2 px-3 py-1.5 rounded-lg bg-sage-100 text-sage-800 text-[10px] font-bold hover:bg-sage-200 disabled:opacity-50"
+                                    >
+                                      {lang === 'id' ? 'Simpan Catatan' : 'Save Note'}
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="flex justify-between items-center min-h-4 text-[10px] text-slate-500">
+                                  {item.is_achieved && item.achieved_at
+                                    ? <span className="text-sage-700">{t.milestoneAchievedDate}: {new Date(item.achieved_at).toLocaleDateString(lang === 'id' ? 'id-ID' : 'en-US')}</span>
+                                    : <span />}
+                                  {isSaving && <span role="status">{t.milestoneSaving}</span>}
+                                </div>
+                              </>
+                            );
+                          })()}
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
     // ====================================================================
     // MODAL: DETAIL PANDUAN AKTIVITAS
     // ====================================================================
@@ -3549,6 +4097,22 @@
                 <p className="text-slate-600 text-sm mt-1">{activity.description[lang]}</p>
               </div>
 
+              {/* Contoh hasil aktivitas ditampilkan sebelum bahan dan langkah. */}
+              <section className="p-4 bg-white border border-sage-200 rounded-2xl shadow-sm space-y-3">
+                <h4 className="font-bold text-sage-800 text-sm flex items-center gap-2">
+                  <span aria-hidden="true">✨</span>
+                  {t.activityResultLabel}
+                </h4>
+                <div className="min-h-52 md:min-h-64 flex justify-center items-center p-3 rounded-2xl bg-gray-50">
+                  <img
+                    src={activity.localGuideImages?.final || activity.final_image?.[lang]}
+                    alt={`${t.activityResultLabel}: ${activity.title[lang]}`}
+                    loading="lazy"
+                    className="mx-auto w-full max-h-64 rounded-xl object-contain"
+                  />
+                </div>
+              </section>
+
               {/* Bahan Rumah Tangga */}
               <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-5">
                 <h4 className="font-bold text-amber-900 text-xs flex items-center gap-2 mb-3">
@@ -3563,16 +4127,6 @@
                     </li>
                   ))}
                 </ul>
-                {activity.localGuideImages?.materials && (
-                  <div className="mt-4 min-h-48 flex justify-center items-center p-3 rounded-xl bg-gray-50 border border-amber-100">
-                    <img
-                      src={activity.localGuideImages.materials}
-                      alt={t.householdMaterials}
-                      loading="lazy"
-                      className="mx-auto w-full max-h-64 rounded-lg object-contain"
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Langkah Instruksi Bertahap */}
@@ -3602,22 +4156,6 @@
                   ))}
                 </ol>
               </div>
-
-              {/* Hasil Akhir */}
-              <section className="p-5 bg-white border border-sage-200 rounded-2xl shadow-sm">
-                <h4 className="font-bold text-sage-800 text-sm flex items-center gap-2 mb-3">
-                  <span aria-hidden="true">✨</span>
-                  {t.finalResult}
-                </h4>
-                <div className="min-h-52 md:min-h-64 flex justify-center items-center p-3 rounded-2xl bg-gray-50">
-                  <img
-                    src={activity.localGuideImages?.final || activity.final_image?.[lang]}
-                    alt={`${t.finalResult}: ${activity.title[lang]}`}
-                    loading="lazy"
-                    className="mx-auto w-full max-h-64 rounded-xl object-contain"
-                  />
-                </div>
-              </section>
 
               {/* Indikator Perkembangan */}
               <div className="p-4 bg-stone-100 rounded-2xl">
@@ -3932,7 +4470,7 @@
             { table: 'activities', columns: 'id,title,description,category,min_age,max_age,duration_minutes,materials,steps,parent_tips,variations,learning_goal' },
             { table: 'activity_logs', columns: 'id,child_id,activity_id,status,scheduled_date,completed_at' },
             { table: 'journal_entries', columns: 'id,child_id,activity_id,entry_date,notes,engagement_level,milestone_tag,photo_url' },
-            { table: 'milestones', columns: 'id,domain,age_group,description' }
+            { table: 'milestones', columns: 'id,child_id,milestone_key,domain,age_group,description,description_en,is_achieved,achieved_at' }
           ];
           const results = await Promise.all(
             tableChecks.map(check => testClient.from(check.table).select(check.columns).limit(1))
@@ -3997,10 +4535,53 @@ create table if not exists public.journal_entries (
   milestone_tag varchar(100), photo_url text, created_at timestamptz default current_timestamp
 );
 create table if not exists public.milestones (
-  id uuid primary key default gen_random_uuid(), domain varchar(50) not null,
-  age_group varchar(50) not null, description text not null,
+  id uuid primary key default gen_random_uuid(),
+  child_id uuid references public.children(id) on delete cascade, milestone_key text,
+  domain varchar(50) not null, age_group varchar(50) not null, description text not null,
+  description_en text, is_achieved boolean not null default false, achieved_at timestamptz,
   created_at timestamptz default current_timestamp
 );
+alter table public.milestones
+  add column if not exists child_id uuid references public.children(id) on delete cascade,
+  add column if not exists milestone_key text, add column if not exists description_en text,
+  add column if not exists is_achieved boolean not null default false,
+  add column if not exists achieved_at timestamptz;
+create unique index if not exists milestones_child_key_idx
+  on public.milestones(child_id, milestone_key)
+  where child_id is not null and milestone_key is not null;
+alter table public.milestones enable row level security;
+drop policy if exists "Milestones are readable" on public.milestones;
+drop policy if exists "Parents can read their children's milestones" on public.milestones;
+create policy "Parents can read their children's milestones"
+  on public.milestones for select to anon, authenticated using (
+    child_id is null or exists (
+      select 1 from public.children c join public.parents p on p.id = c.parent_id
+      where c.id = milestones.child_id and lower(p.email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+drop policy if exists "Parents can add their children's milestones" on public.milestones;
+create policy "Parents can add their children's milestones"
+  on public.milestones for insert to authenticated with check (
+    child_id is not null and exists (
+      select 1 from public.children c join public.parents p on p.id = c.parent_id
+      where c.id = milestones.child_id and lower(p.email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+drop policy if exists "Parents can update their children's milestones" on public.milestones;
+create policy "Parents can update their children's milestones"
+  on public.milestones for update to authenticated using (
+    child_id is not null and exists (
+      select 1 from public.children c join public.parents p on p.id = c.parent_id
+      where c.id = milestones.child_id and lower(p.email) = lower(auth.jwt() ->> 'email')
+    )
+  ) with check (
+    child_id is not null and exists (
+      select 1 from public.children c join public.parents p on p.id = c.parent_id
+      where c.id = milestones.child_id and lower(p.email) = lower(auth.jwt() ->> 'email')
+    )
+  );
+grant select on public.milestones to anon, authenticated;
+grant insert, update on public.milestones to authenticated;
 alter table public.parents enable row level security;
 drop policy if exists "Parents can read their own profile" on public.parents;
 create policy "Parents can read their own profile"
